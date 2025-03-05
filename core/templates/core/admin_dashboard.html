@@ -1,0 +1,80 @@
+{% extends "core/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="min-height: 85vh;">
+    <h2 class="my-4">Admin Dashboard</h2>
+    <div class="row">
+        <!-- Total Users -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-primary shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Users</h5>
+                    <h2>{{ total_users }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Projects -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-success shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Projects</h5>
+                    <h2>{{ total_projects }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Tasks -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-danger shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Tasks</h5>
+                    <h2>{{ total_tasks }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-info shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Completed Tasks</h5>
+                    <h2>{{ total_completed_tasks }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Not Started Tasks -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-secondary shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Not Started Tasks</h5>
+                    <h2>{{ total_not_started_tasks }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress Tasks -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-warning shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">In Progress Tasks</h5>
+                    <h2>{{ total_in_progress_tasks }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- On Hold Tasks -->
+        <div class="col-md-4 col-sm-6 mb-3">
+            <div class="card text-white bg-dark shadow-lg">
+                <div class="card-body text-center">
+                    <h5 class="card-title">On Hold Tasks</h5>
+                    <h2>{{ total_on_hold_tasks }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>    
+</div>
+{% endblock %}

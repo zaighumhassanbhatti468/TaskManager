@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 class UserManager(BaseUserManager):
-    def create_user(self, fullname, phonenumber, email, password=None, role=None, address=""):
+    def create_user(self, fullname, phonenumber, email, password=None, address=""):
         if not fullname:
             raise ValueError("Full name is required")
         if not phonenumber:
@@ -16,16 +16,15 @@ class UserManager(BaseUserManager):
             fullname=fullname,
             phonenumber=phonenumber,
             email=self.normalize_email(email),
-            role=role,
             address=address
         )
         user.set_password(password)
+        user.address = address  
         user.save(using=self._db)
         return user
 
     def create_superuser(self, fullname, phonenumber, email, password):
         user = self.create_user(fullname, phonenumber, email, password)
-        user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
         return user
@@ -37,10 +36,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     address = models.TextField(blank=True, null=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
-    role = models.ForeignKey('Role', on_delete=models.SET_NULL, null=True)
 
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
     objects = UserManager()
 

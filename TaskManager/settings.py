@@ -130,3 +130,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 AUTH_USER_MODEL = "core.User"
 
 ALLOWED_HOSTS = ["*"]  # Change to actual domain or IP in production
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+

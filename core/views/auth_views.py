@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
+from core.models import User  # Import your User model
 
-def user_login(request):
+def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -11,14 +12,18 @@ def user_login(request):
 
         if user is not None:
             login(request, user)
-            messages.success(request, "Login successful!")
-            return redirect("dashboard")
+            
+            # Redirect based on user role
+            if user.is_superuser:
+                return redirect("admin_dashboard")
+            else:
+                return redirect("user_dashboard")
         else:
-            messages.error(request, "Invalid email or password!")
-
+            messages.error(request, "Invalid email or password.")
+    
     return render(request, "core/login.html")
 
-def user_logout(request):
+
+def logout_view(request):
     logout(request)
-    messages.success(request, "Logged out successfully!")
-    return redirect("login")
+    return redirect('login')
