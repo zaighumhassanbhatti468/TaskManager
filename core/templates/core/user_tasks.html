@@ -1,0 +1,169 @@
+{% extends "core/base.html" %}
+{% block title %}Manage Tasks{% endblock %}
+{% block content %}
+<div class="container" style="min-height: 85vh;">
+    <div class="col-12 text-center">
+        <div class="row">
+            <div class="col-12">
+                <h2>Manage Tasks</h2>
+            </div>
+        </div>
+        <div class="card shadow-lg p-4" style="width: 100%;">
+            <div class="table-responsive">
+                <table id="example" class="table table-bordered table-responsive-md">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Due Date</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Project</th>
+                            <th>Last Update</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>{{ task.title }}</td>
+                            <td>{{ task.description }}</td>
+                            <td>
+                                {{ task.due_date }}
+                            </td>
+                                
+                            </td>
+                            <td>{{ task.priority }}</td>
+                            <td>{{ task.status }}</td>
+                            <td>{{ task.project.name }}</td>
+                            <td>{{ task.updated_at|default:task.created_at }}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm edit-btn"
+                                    data-id="{{ task.id }}"
+                                    data-title="{{ task.title }}"
+                                    data-description="{{ task.description }}"
+                                    data-due-date="{{ task.due_date|date:'Y-m-d' }}"
+                                    data-priority="{{ task.priority }}"
+                                    data-status="{{ task.status }}"
+                                    data-assigned_to="{{ task.assigned_to.id }}"
+                                    data-project="{{ task.project.name }}"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#taskModal">
+                                    Change Status
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="task_id">
+                    <div class="mb-3">
+                        <label>Title : </label><strong>&nbsp;<span id="task_title"></span></strong>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description : </label><strong>&nbsp;<span id="task_description"></span></strong>
+                    </div>
+                    <div class="mb-3">
+                        <label>Due Date : </label><strong>&nbsp;<span id="task_due_date"></span></strong>
+                    </div>
+                    <div class="mb-3">
+                        <label>Priority : </label><strong>&nbsp;<span id="task_priority"></span></strong>
+                    </div> 
+                    <div class="mb-3">
+                        <label>Project : </label><strong>&nbsp;<span id="task_project"></span></strong>
+                    </div>                   
+                    <div class="mb-3">
+                        <label>Status</label>
+                        <select class="form-control" name="status" required>
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="On Hold">On Hold</option>
+                        </select>
+                    </div>    
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let taskForm = document.getElementById('taskForm');
+        let modalTitle = document.getElementById('modalTitle');
+        function formatDateForInput(dateString) {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+        // Open Edit Task Modal
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                modalTitle.innerText = 'Edit Task';
+
+                document.querySelector('input[name="task_id"]').value = this.dataset.id;
+                document.getElementById('task_title').innerText = this.dataset.title;
+                document.getElementById('task_description').innerText = this.dataset.description;
+                document.getElementById('task_due_date').innerText = formatDateForInput(this.dataset.dueDate);
+                document.getElementById('task_priority').innerText = this.dataset.priority;
+                document.getElementById('task_project').innerText = this.dataset.project;
+
+                // Select element update remains unchanged
+                document.querySelector('select[name="status"]').value = this.dataset.status;
+            });
+        });
+
+        taskForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            let formData = new FormData(this);
+
+            let projectIdField = document.querySelector('input[name="project_id"]');
+            if (projectIdField) {
+                let projectId = parseInt(projectIdField.value, 10); // Convert to integer
+                formData.set("project_id", projectId);  // Ensure it's sent as an integer
+            }
+
+            let taskId = document.querySelector('input[name="task_id"]').value;
+            let url = taskId ? `/tasks/update/${taskId}/` : '/tasks/add/';
+
+            fetch(url, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error);
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -32,4 +32,5 @@ urlpatterns = [
     path('tasks/reassign/<int:task_id>/', reassign_task, name='reassign_task'),  # Reassign task
     
     path('dashboard/user/', user_dashboard, name='user_dashboard'),
+    path('tasks/my/', user_tasks, name='user_tasks'),
 ]
