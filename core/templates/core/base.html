@@ -30,7 +30,17 @@
                             <li class="nav-item"><a class="nav-link" href="{% url 'user_dashboard' %}">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" href="{% url 'user_tasks' %}">My Tasks</a></li>
                         {% endif %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ user.fullname }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'password_change' %}">Change Password</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Logout</a></li>
+                            </ul>
+                        </li>
                     {% else %}
                         <!-- Only Show Login Page When User is Not Logged In -->
                         <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>

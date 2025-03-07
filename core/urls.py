@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from core.views.auth_views import login_view,logout_view
+from core.views.auth_views import login_view,logout_view,profile_view,password_change
 from core.views.dashboard_views import admin_dashboard, user_dashboard
 from core.views.user_views import manage_users, add_user, update_user, delete_user
 from core.views.project_views import manage_projects, add_project, update_project, delete_project
@@ -9,8 +9,8 @@ from core.views.task_views import manage_tasks, add_task, update_task, delete_ta
 urlpatterns = [
     # Login & Register
     path('', login_view, name='login'),  # Default page is the login page
-    
-
+    path('profile/', profile_view, name='profile'),
+    path('password_change/', password_change, name='password_change'),
     path('logout/', logout_view, name='logout'),
 
     path('dashboard/admin/', admin_dashboard, name='admin_dashboard'),

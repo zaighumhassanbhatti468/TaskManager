@@ -1,15 +1,15 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Register - Task Manager{% endblock %}
+{% block title %}Profile - Task Manager{% endblock %}
 
 {% block content %}
 <div class="container d-flex align-items-center justify-content-center" style="min-height: 85vh;">
     <div class="card shadow-lg p-4" style="width: 100%; max-width: 400px;">
-        <h2 class="text-center">Register</h2>
+        <h2 class="text-center">Update Profile</h2>
 
         {% if messages %}
             {% for message in messages %}
-                <p class="text-danger">{{ message }}</p>
+                <p class="text-success">{{ message }}</p>
             {% endfor %}
         {% endif %}
 
@@ -20,25 +20,23 @@
 
                     <div class="mb-3">
                         <label class="form-label">Full Name:</label>
-                        <input type="text" name="fullname" class="form-control" required>
+                        <input type="text" name="fullname" class="form-control" value="{{ user.fullname }}" required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Email:</label>
-                        <input type="email" name="email" class="form-control" required>
+                        <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Phone Number:</label>
-                        <input type="text" name="phonenumber" class="form-control" required>
+                        <input type="text" name="phonenumber" class="form-control" value="{{ user.phonenumber }}" required>
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">Password:</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <label>Address</label>
+                        <input type="text" class="form-control" name="address" value="{{ user.address}}">
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100">Register</button>
+                    <button type="submit" class="btn btn-success w-100">Update</button>
                 </form>
             </div>
         </div>
