@@ -39,9 +39,9 @@
                                     data-address="{{ user.address }}"
                                     data-bs-toggle="modal"
                                     data-bs-target="#userModal">
-                                    Edit
+                                    <i class="bi bi-pencil-square me-1"></i> Edit
                                 </button>
-                                <button class="btn btn-danger btn-sm delete-btn" data-id="{{ user.id }}">Delete</button>
+                                <button class="btn btn-danger btn-sm delete-btn" data-id="{{ user.id }}"><i class="bi bi-trash me-1"></i> Delete</button>
                             </td>
                         </tr>
                         {% endfor %}
