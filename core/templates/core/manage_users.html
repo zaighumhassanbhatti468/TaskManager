@@ -11,7 +11,18 @@
                 <button class="btn btn-primary mb-3" id="openAddModal" data-bs-toggle="modal" data-bs-target="#userModal">Add User</button>
             </div>
         </div>
-        <div class="card shadow-lg p-4" style="width: 100%;">
+        <div class="card shadow-lg p-4" style="width: 100%;">            
+            <ul class="nav nav-tabs mb-3" id="userTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-filter="all" href="#">All Users</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-filter="active" href="#">Active Users</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-filter="inactive" href="#">Inactive Users</a>
+                </li>
+            </ul>
             <div class="table-responsive">
                 <table id="example" class="table table-bordered table-responsive-md">
                     <thead>
@@ -25,12 +36,18 @@
                     </thead>
                     <tbody>
                         {% for user in users %}
-                        <tr>
+                        <tr class="user-row" data-status="{% if user.is_active %}active{% else %}inactive{% endif %}">
                             <td>{{ user.fullname }}</td>
                             <td>{{ user.email }}</td>
                             <td>{{ user.phonenumber }}</td>
                             <td>{{ user.address }}</td>
                             <td>
+                                <button class="btn status-btn btn-sm {% if user.is_active %}btn-success{% else %}btn-secondary{% endif %}" 
+                                    data-id="{{ user.id }}" 
+                                    data-status="{% if user.is_active %}active{% else %}inactive{% endif %}">
+                                    <i class="bi {% if user.is_active %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i> 
+                                    <span>{% if user.is_active %}Active{% else %}Inactive{% endif %}</span>
+                                </button>
                                 <button class="btn btn-warning btn-sm edit-btn"
                                     data-id="{{ user.id }}"
                                     data-fullname="{{ user.fullname }}"
@@ -166,6 +183,78 @@
         });
     });
     });
-</script>
+    document.addEventListener("DOMContentLoaded", function () {
+    document.querySelector("tbody").addEventListener("click", function (e) {
+        let button = e.target.closest(".status-btn"); // Ensure the button is selected
+        if (!button) return; // If not a status button, do nothing
 
+        let userId = button.getAttribute("data-id");
+        let currentStatus = button.getAttribute("data-status");
+        let newStatus = currentStatus === "inactive" ? "active" : "inactive";
+
+        fetch(`/toggle_user_status/${userId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ is_active: newStatus === "active" }) // Toggle status
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let row = button.closest("tr"); // Get the parent row
+
+                if (data.is_active) {
+                    button.classList.remove("btn-secondary");
+                    button.classList.add("btn-success");
+                    button.setAttribute("data-status", "active");
+                    button.innerHTML = `<i class="bi bi-check-circle me-1"></i> Active`;
+                    row.setAttribute("data-status", "active"); 
+                } else {
+                    button.classList.remove("btn-success");
+                    button.classList.add("btn-secondary");
+                    button.setAttribute("data-status", "inactive");
+                    button.innerHTML = `<i class="bi bi-x-circle me-1"></i> Inactive`;
+                    row.setAttribute("data-status", "inactive"); 
+                }
+
+                $(document).trigger("ajaxComplete"); // Trigger filter update
+            }
+        });
+    });
+});
+
+
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const tabs = document.querySelectorAll("#userTabs .nav-link");
+
+    function applyFilter(filter) {
+        document.querySelectorAll("tbody tr").forEach(row => {
+            if (filter === "all" || row.getAttribute("data-status") === filter) {
+                row.style.display = "table-row";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", function (e) {
+            e.preventDefault();
+            tabs.forEach(t => t.classList.remove("active"));
+            this.classList.add("active");
+            applyFilter(this.getAttribute("data-filter"));
+        });
+    });
+
+    document.addEventListener("ajaxComplete", function () {
+        applyFilter(document.querySelector("#userTabs .nav-link.active").getAttribute("data-filter"));
+    });
+});
+
+    </script>
+        
 {% endblock %}

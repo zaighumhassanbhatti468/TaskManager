@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from core.models import User
+import json
 
 @login_required
 def user_dashboard(request):
@@ -78,3 +79,17 @@ def delete_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.delete()
     return JsonResponse({'success': 'User deleted successfully'})
+
+@csrf_exempt
+@login_required
+def toggle_user_status(request, user_id):
+    if request.method == "POST":
+        try:
+            user = User.objects.get(id=user_id)
+            data = json.loads(request.body)
+            user.is_active = data["is_active"]
+            user.save()
+            return JsonResponse({"success": True, "is_active": user.is_active})
+        except User.DoesNotExist:
+            return JsonResponse({"success": False, "error": "User not found"}, status=404)
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
