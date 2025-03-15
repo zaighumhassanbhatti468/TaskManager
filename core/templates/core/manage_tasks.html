@@ -12,6 +12,23 @@
             </div>
         </div>
         <div class="card shadow-lg p-4" style="width: 100%;">
+            <ul class="nav nav-tabs mb-3" id="taskTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-filter="all" href="#">All Tasks</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-filter="Not Started" href="#">Not Started</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-filter="In Progress" href="#">In Progress</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-filter="Completed" href="#">Completed</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-filter="On Hold" href="#">On Hold</a>
+                </li>
+            </ul>
             <div class="table-responsive">
                 <table id="example" class="table table-bordered table-responsive-md">
                     <thead>
@@ -29,7 +46,7 @@
                     </thead>
                     <tbody>
                         {% for task in tasks %}
-                        <tr>
+                        <tr class="task-row" data-status="{{ task.status }}">
                             <td>{{ task.title }}</td>
                             <td>{{ task.description }}</td>
                             <td>
@@ -223,5 +240,28 @@
         });
     });
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabs = document.querySelectorAll("#taskTabs .nav-link");
 
+        function applyFilter(filter) {
+            document.querySelectorAll("tbody tr").forEach(row => {
+                if (filter === "all" || row.getAttribute("data-status") === filter) {
+                    row.style.display = "table-row";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", function (e) {
+                e.preventDefault();
+                tabs.forEach(t => t.classList.remove("active"));
+                this.classList.add("active");
+                applyFilter(this.getAttribute("data-filter"));
+            });
+        });
+    });
+</script>
 {% endblock %}
