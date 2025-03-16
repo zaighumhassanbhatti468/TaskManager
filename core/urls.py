@@ -3,7 +3,7 @@ from django.contrib.auth import views as auth_views
 from core.views.auth_views import login_view,logout_view,profile_view,password_change
 from core.views.dashboard_views import admin_dashboard, user_dashboard
 from core.views.user_views import manage_users, add_user, update_user, delete_user,toggle_user_status
-from core.views.project_views import manage_projects, add_project, update_project, delete_project
+from core.views.project_views import manage_projects, add_project, update_project, delete_project,get_tasks
 from core.views.task_views import manage_tasks, add_task, update_task, delete_task, change_task_priority, reassign_task, user_tasks
 
 urlpatterns = [
@@ -19,6 +19,7 @@ urlpatterns = [
     path('update-user/<int:user_id>/', update_user, name='update_user'),
     path('delete-user/<int:user_id>/', delete_user, name='delete_user'),
     path("toggle_user_status/<int:user_id>/", toggle_user_status, name="toggle_user_status"),
+    path('get-tasks/<int:project_id>/', get_tasks, name='get_tasks'),
 
     path('projects/', manage_projects, name='manage_projects'),
     path('projects/add/', add_project, name='add_project'),

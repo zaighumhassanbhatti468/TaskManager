@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from core.models import Project
+from core.models import Task
 
 @login_required
 def manage_projects(request):
@@ -51,3 +52,11 @@ def delete_project(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     project.delete()
     return JsonResponse({'success': 'Project deleted successfully'})
+
+@login_required
+@csrf_exempt
+def get_tasks(request, project_id):
+    tasks = Task.objects.filter(project_id=project_id).values(
+        "title", "description", "status", "priority", "assigned_to__fullname"
+    )
+    return JsonResponse({"tasks": list(tasks)})
