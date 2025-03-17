@@ -4,7 +4,7 @@ from core.views.auth_views import login_view,logout_view,profile_view,password_c
 from core.views.dashboard_views import admin_dashboard, user_dashboard
 from core.views.user_views import manage_users, add_user, update_user, delete_user,toggle_user_status
 from core.views.project_views import manage_projects, add_project, update_project, delete_project,get_tasks
-from core.views.task_views import manage_tasks, add_task, update_task, delete_task, change_task_priority, reassign_task, user_tasks
+from core.views.task_views import manage_tasks, add_task, update_task, delete_task, change_task_priority, reassign_task, user_tasks,get_task_comments, add_comment,add_reply
 
 urlpatterns = [
     # Login & Register
@@ -26,12 +26,15 @@ urlpatterns = [
     path('projects/update/<int:project_id>/', update_project, name='update_project'),
     path('projects/delete/<int:project_id>/', delete_project, name='delete_project'),
 
-    path('tasks/', manage_tasks, name='manage_tasks'),  # View all tasks
-    path('tasks/add/', add_task, name='add_task'),  # Add a new task
-    path('tasks/update/<int:task_id>/', update_task, name='update_task'),  # Update task
-    path('tasks/delete/<int:task_id>/', delete_task, name='delete_task'),  # Delete task
-    path('tasks/change-priority/<int:task_id>/', change_task_priority, name='change_priority'),  # Change priority
-    path('tasks/reassign/<int:task_id>/', reassign_task, name='reassign_task'),  # Reassign task
+    path('tasks/', manage_tasks, name='manage_tasks'),  
+    path('tasks/add/', add_task, name='add_task'),  
+    path('tasks/update/<int:task_id>/', update_task, name='update_task'),  
+    path('tasks/delete/<int:task_id>/', delete_task, name='delete_task'), 
+    path('tasks/change-priority/<int:task_id>/', change_task_priority, name='change_priority'),  
+    path('tasks/reassign/<int:task_id>/', reassign_task, name='reassign_task'),  
+    path("tasks/<int:task_id>/comments/", get_task_comments, name="get_task_comments"),
+    path("tasks/add-comment/", add_comment, name="add_comment"),
+    path("tasks/add-reply/", add_reply, name="add_reply"),
     
     path('dashboard/user/', user_dashboard, name='user_dashboard'),
     path('tasks/my/', user_tasks, name='user_tasks'),

@@ -73,7 +73,16 @@
                                     data-bs-target="#taskModal">
                                     <i class="bi bi-pencil-square me-1"></i> Edit
                                 </button>
-                                <button class="btn btn-danger btn-sm delete-btn" data-id="{{ task.id }}"><i class="bi bi-trash me-1"></i> Delete</button>
+                                <button class="btn btn-info btn-sm view-comments"
+                                    data-task-id="{{ task.id }}" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#commentModal">
+                                    <i class="bi bi-chat-dots me-1"></i> View Comments
+                                </button>
+                                <button class="btn btn-danger btn-sm delete-btn" 
+                                    data-id="{{ task.id }}">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -145,6 +154,33 @@
                         </select>
                     </div>
                     <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Comment Modal -->
+<div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Task Comments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commentSection">
+                    <p>Loading comments...</p>
+                </div>
+                
+                <!-- New Comment Form -->
+                <form id="commentForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                    <div class="mb-3">
+                        <label>New Comment</label>
+                        <textarea class="form-control" name="comment_text" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Comment</button>
                 </form>
             </div>
         </div>
@@ -260,6 +296,88 @@
                 tabs.forEach(t => t.classList.remove("active"));
                 this.classList.add("active");
                 applyFilter(this.getAttribute("data-filter"));
+            });
+        });
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".view-comments").forEach(button => {
+            button.addEventListener("click", function () {
+                const taskId = this.dataset.taskId;
+                fetch(`/tasks/${taskId}/comments/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let commentHtml = "";
+                        data.comments.forEach(comment => {
+                            commentHtml += `
+                                <div class="comment">
+                                    <p><strong>${comment.user}</strong>: ${comment.content}</p>
+                                    <small>${comment.created_at}</small>
+                                    ${comment.is_owner ? "" : `<button class="btn btn-sm btn-secondary reply-btn" data-comment-id="${comment.id}">Reply</button>`}
+                                    <div class="reply-box" style="display: none;">
+                                        <textarea class="form-control reply-text" placeholder="Write a reply..."></textarea>
+                                        <button class="btn btn-success btn-sm submit-reply" data-comment-id="${comment.id}">Submit Reply</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        document.getElementById("commentSection").innerHTML = commentHtml || "No comments yet.";
+
+                        document.querySelectorAll(".reply-btn").forEach(replyBtn => {
+                            replyBtn.addEventListener("click", function () {
+                                this.nextElementSibling.style.display = "block";
+                            });
+                        });
+
+                        document.querySelectorAll(".submit-reply").forEach(submitReplyBtn => {
+                            submitReplyBtn.addEventListener("click", function () {
+                                const commentId = this.dataset.commentId;
+                                const replyText = this.previousElementSibling.value;
+                                if (!replyText) {
+                                    alert("Reply cannot be empty!");
+                                    return;
+                                }
+                                let formData = new FormData();
+                                formData.append("comment_id", commentId);
+                                formData.append("reply_text", replyText);
+                                formData.append("csrfmiddlewaretoken", document.querySelector('[name=csrfmiddlewaretoken]').value);
+                                
+                                fetch(`/tasks/add-reply/`, {
+                                    method: "POST",
+                                    body: formData
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        location.reload();
+                                    } else {
+                                        alert(data.error);
+                                    }
+                                });
+                            });
+                        });
+                    });
+            });
+        });
+
+        document.getElementById("commentForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            let formData = new FormData(this);
+            fetch(`/tasks/add-comment/`, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error);
+                }
             });
         });
     });

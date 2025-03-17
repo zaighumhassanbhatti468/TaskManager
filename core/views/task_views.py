@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
-from core.models import Task, Project, User
+from core.models import Task, Project, User, Comment
 from datetime import date, timedelta
 from datetime import datetime
 
@@ -154,3 +154,66 @@ def user_tasks(request):
     """View for a user to see their assigned tasks."""
     tasks = Task.objects.filter(assigned_to=request.user)
     return render(request, 'core/user_tasks.html', {'tasks': tasks})
+
+
+@login_required
+def get_task_comments(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+    comments = Comment.objects.filter(task=task).order_by("-created_at")
+
+    comments_data = [
+        {
+            "id": comment.id,  
+            "user": "You" if comment.user == request.user else comment.user.fullname,  # Show "You" if the comment belongs to the logged-in user
+            "content": comment.content,
+            "created_at": comment.created_at.strftime("%Y-%m-%d %H:%M"),
+            "is_owner": comment.user == request.user  # Used to hide the reply button for own comments
+        }
+        for comment in comments
+    ]
+    
+    return JsonResponse({"comments": comments_data})
+
+
+@csrf_exempt
+@login_required
+def add_comment(request):
+    if request.method == "POST":
+        task_id = request.POST.get("task_id")
+        comment_text = request.POST.get("comment_text")
+
+        if not task_id or not comment_text:  # Ensure task_id is valid
+            return JsonResponse({"success": False, "error": "Missing task_id or comment_text"}, status=400)
+
+        task = get_object_or_404(Task, id=task_id)
+        comment = Comment.objects.create(task=task, user=request.user, content=comment_text)
+
+        
+        return JsonResponse({"success": True, "comment_id": comment.id})
+    
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+@login_required
+def add_reply(request):
+    if request.method == "POST":
+        comment_id = request.POST.get("comment_id")
+        reply_text = request.POST.get("reply_text")
+
+        if not comment_id or not reply_text:  # Ensure comment_id is valid
+            return JsonResponse({"success": False, "error": "Missing comment_id or reply_text"}, status=400)
+
+        parent_comment = get_object_or_404(Comment, id=comment_id)
+
+        reply = Comment.objects.create(
+            task=parent_comment.task,
+            user=request.user,
+            content=reply_text,
+            parent=parent_comment
+        )
+
+        return JsonResponse({"success": True, "reply_id": reply.id})
+
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+

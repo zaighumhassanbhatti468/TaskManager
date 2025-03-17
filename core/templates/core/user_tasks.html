@@ -68,6 +68,12 @@
                                     data-bs-target="#taskModal">
                                     <i class="bi bi-arrow-repeat me-1"></i> Change Status
                                 </button>
+                                <button class="btn btn-info btn-sm view-comments-btn" 
+                                    data-task-id="{{ task.id }}" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#commentsModal">
+                                    <i class="bi bi-chat-dots"></i> View Comments
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -115,6 +121,34 @@
                         </select>
                     </div>    
                     <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Comments Modal -->
+<div class="modal fade" id="commentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Task Comments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commentsSection" class="mb-3">
+                    <h6>Comments:</h6>
+                    <ul id="commentsList" class="list-group"></ul>
+                </div>
+
+                <!-- Add Comment Form -->
+                <form id="commentForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="task_id">
+                    <div class="mb-3">
+                        <label for="commentText">Add a Comment:</label>
+                        <textarea name="comment_text" id="commentText" class="form-control" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Comment</button>
                 </form>
             </div>
         </div>
@@ -184,26 +218,143 @@
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const tabs = document.querySelectorAll("#taskTabs .nav-link");
+        document.querySelectorAll(".view-comments-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let taskId = this.dataset.taskId; // Get task ID from button
+                console.log("Task ID set in modal:", taskId); // Debugging
 
-        function applyFilter(filter) {
-            document.querySelectorAll("tbody tr").forEach(row => {
-                if (filter === "all" || row.getAttribute("data-status") === filter) {
-                    row.style.display = "table-row";
-                } else {
-                    row.style.display = "none";
+                if (!taskId) {
+                    console.error("Error: Task ID is missing!");
+                    return;
                 }
-            });
-        }
 
-        tabs.forEach(tab => {
-            tab.addEventListener("click", function (e) {
-                e.preventDefault();
-                tabs.forEach(t => t.classList.remove("active"));
-                this.classList.add("active");
-                applyFilter(this.getAttribute("data-filter"));
+                // Ensure only the modal being opened gets updated
+                let modal = document.getElementById("commentsModal");
+                let taskIdInput = modal.querySelector("input[name='task_id']");
+                taskIdInput.value = taskId;
+
+                console.log("Updated hidden input value:", taskIdInput.value); // Debugging check
+
+                // Fetch comments
+                fetch(`/tasks/${taskId}/comments/`)
+                .then(response => response.json())
+                .then(data => {
+                    let commentsList = document.getElementById("commentsList");
+                    commentsList.innerHTML = ""; // Clear old comments
+
+                    data.comments.forEach(comment => {
+                        let listItem = document.createElement("li");
+                        listItem.className = "list-group-item";
+                        listItem.innerHTML = `
+                            <strong>${comment.user}:</strong> ${comment.content} <br>
+                            <small class="text-muted">${comment.created_at}</small>
+                            ${comment.is_owner ? "" : `
+                                <button class="btn btn-sm btn-link reply-btn" data-comment-id="${comment.id}">Reply</button>
+                                <div class="reply-form d-none mt-2">
+                                    <textarea class="form-control reply-text" placeholder="Write a reply..."></textarea>
+                                    <button class="btn btn-success btn-sm submit-reply mt-1" data-comment-id="${comment.id}">Submit Reply</button>
+                                </div>
+                            `}
+                            <ul class="replies-list"></ul>
+                        `;
+
+                        // Append replies if any
+                        if (comment.replies && comment.replies.length > 0) {
+                            let repliesList = listItem.querySelector(".replies-list");
+                            comment.replies.forEach(reply => {
+                                let replyItem = document.createElement("li");
+                                replyItem.className = "list-group-item ms-3";
+                                replyItem.innerHTML = `
+                                    <strong>${reply.user}:</strong> ${reply.content} <br>
+                                    <small class="text-muted">${reply.created_at}</small>
+                                `;
+                                repliesList.appendChild(replyItem);
+                            });
+                        }
+
+                        commentsList.appendChild(listItem);
+                    });
+
+                    attachReplyEventListeners();
+                });
             });
         });
+
+        // Debugging: Log hidden input value on modal open
+        document.getElementById("commentsModal").addEventListener("shown.bs.modal", function () {
+            let taskIdInput = this.querySelector("input[name='task_id']");
+            console.log("Modal Opened - Hidden Input Task ID:", taskIdInput.value);
+        });
+
+        // Ensure the form submits with the correct task_id
+        document.getElementById("commentForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            let taskIdInput = this.querySelector("input[name='task_id']");
+            
+            if (!taskIdInput.value) {
+                alert("Error: Task ID is missing!");
+                return;
+            }
+
+            let formData = new FormData(this);
+
+            fetch("/tasks/add-comment/", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert("Error adding comment!");
+                }
+            });
+        });
+
+        // Function to attach event listeners for reply buttons
+        function attachReplyEventListeners() {
+            document.querySelectorAll(".reply-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    let replyForm = this.nextElementSibling;
+                    replyForm.classList.toggle("d-none");
+                });
+            });
+
+            document.querySelectorAll(".submit-reply").forEach(button => {
+                button.addEventListener("click", function () {
+                    let commentId = this.dataset.commentId;
+                    let replyText = this.previousElementSibling.value;
+
+                    if (!replyText) {
+                        alert("Reply cannot be empty!");
+                        return;
+                    }
+
+                    let formData = new FormData();
+                    formData.append("comment_id", commentId);
+                    formData.append("reply_text", replyText);
+                    formData.append("csrfmiddlewaretoken", document.querySelector("[name=csrfmiddlewaretoken]").value);
+
+                    fetch("/tasks/add-reply/", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert("Error adding reply!");
+                        }
+                    });
+                });
+            });
+        }
     });
 </script>
 {% endblock %}
