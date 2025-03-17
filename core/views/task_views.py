@@ -159,20 +159,23 @@ def user_tasks(request):
 @login_required
 def get_task_comments(request, task_id):
     task = get_object_or_404(Task, id=task_id)
-    comments = Comment.objects.filter(task=task).order_by("-created_at")
+    comments = Comment.objects.filter(task=task, parent__isnull=True).order_by("-created_at")  # Only fetch parent comments
 
-    comments_data = [
-        {
-            "id": comment.id,  
-            "user": "You" if comment.user == request.user else comment.user.fullname,  # Show "You" if the comment belongs to the logged-in user
+    def serialize_comment(comment):
+        """Recursively serialize a comment along with its replies"""
+        return {
+            "id": comment.id,
+            "user": "You" if comment.user == request.user else comment.user.fullname,
             "content": comment.content,
             "created_at": comment.created_at.strftime("%Y-%m-%d %H:%M"),
-            "is_owner": comment.user == request.user  # Used to hide the reply button for own comments
+            "is_owner": comment.user == request.user,
+            "replies": [serialize_comment(reply) for reply in comment.replies.all().order_by("created_at")]  # Get replies sorted by date
         }
-        for comment in comments
-    ]
+
+    comments_data = [serialize_comment(comment) for comment in comments]
     
     return JsonResponse({"comments": comments_data})
+
 
 
 @csrf_exempt
